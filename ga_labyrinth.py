@@ -59,39 +59,48 @@ class Caminho:
 def avaliaCaminho(individuo):
 	valCaminho = 0
 	posAtual = [9,0]
+	ultPos = []
 
-	for str in individuo:
-		if str == DIR_LESTE_STR:
-			if labirinto[posAtual[0]][posAtual[1]] & DIR_LESTE == 0:
-				valCaminho = valCaminho + 10
-			else:
-				valCaminho = valCaminho + 30
+	try:
+		for str in individuo.caminho:
+			ultPos = posAtual
+			if str == DIR_LESTE_STR:
+				if labirinto[posAtual[0]][posAtual[1]] & DIR_LESTE == 0:
+					valCaminho = valCaminho + 10
+				else:
+					valCaminho = valCaminho + 30
+	
+				posAtual[1] = posAtual[1] + 1
+			elif str == DIR_NORTE_STR:
+				if labirinto[posAtual[0]][posAtual[1]] & DIR_NORTE == 0:
+					valCaminho = valCaminho + 10
+				else:
+					valCaminho = valCaminho + 30
 
-			posAtual[1] = posAtual[1] + 1
-		elif str == DIR_NORTE_STR:
-			if labirinto[posAtual[0]][posAtual[1]] & DIR_NORTE == 0:
-				valCaminho = valCaminho + 10
-			else:
-				valCaminho = valCaminho + 30
+				posAtual[0] = posAtual[0] - 1
+			elif str == DIR_OESTE_STR:
+				if labirinto[posAtual[0]][posAtual[1]] & DIR_OESTE == 0:
+					valCaminho = valCaminho + 10
+				else:
+					valCaminho = valCaminho + 30
 
-			posAtual[0] = posAtual[0] - 1
-		elif str == DIR_OESTE_STR:
-			if labirinto[posAtual[0]][posAtual[1]] & DIR_OESTE == 0:
-				valCaminho = valCaminho + 10
-			else:
-				valCaminho = valCaminho + 30
+				posAtual[1] = posAtual[1] - 1
+			elif str == DIR_SUL_STR:
+				if labirinto[posAtual[0]][posAtual[1]] & DIR_SUL == 0:
+					valCaminho = valCaminho + 10
+				else:
+					valCaminho = valCaminho + 30
 
-			posAtual[1] = posAtual[1] - 1
-		elif str == DIR_SUL_STR:
-			if labirinto[posAtual[0]][posAtual[1]] & DIR_SUL == 0:
-				valCaminho = valCaminho + 10
-			else:
-				valCaminho = valCaminho + 30
+				posAtual[0] = posAtual[0] + 1
 
-			posAtual[0] = posAtual[0] + 1
+		if len(ultPos) == 2:
+			if ultPos != [0,9]:
+				valCaminho = valCaminho + 60
+	except IndexError:
+		valCaminho = 1000
 
 	return valCaminho
 
 if __name__ == "__main__":
 	caminho = Caminho()
-	print(caminho)
+	print(avaliaCaminho(caminho))

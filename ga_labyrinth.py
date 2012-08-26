@@ -23,44 +23,55 @@ labirinto = [
 			]
 
 # Constantes usadas
-DIR_LESTE_STR = "00"
-DIR_NORTE_STR = "01"
-DIR_OESTE_STR = "10"
-DIR_SUL_STR   = "11"
+class DirecoesBitwise:
+	DIR_LESTE = 8
+	DIR_NORTE = 4
+	DIR_OESTE = 2
+	DIR_SUL   = 1
 
-DIRS = [DIR_LESTE_STR
-       ,DIR_NORTE_STR
-	   ,DIR_OESTE_STR
-	   ,DIR_SUL_STR]
+class DirecoesVetor:
+	DIR_LESTE = [0, 0]
+	DIR_NORTE = [0, 1]
+	DIR_OESTE = [1, 0]
+	DIR_SUL   = [1, 1]
 
-DIR_LESTE = 8
-DIR_NORTE = 4
-DIR_OESTE = 2
-DIR_SUL   = 1
-
-MIN_TAM_CAMINHO = 27
-MAX_TAM_CAMINHO = 100
-
-mapaMutacao = { "00" : ["01", "10"]
-			  , "01" : ["11", "00"]
-			  , "10" : ["11", "00"]
-			  , "11" : ["10", "01"] }
+class TamanhoCaminho:
+	MINIMO = 54
+	MAXIMO = 200
 
 # Abstração do caminho
 class Caminho:
+	INV_MAP = {0 : 1, 1 : 0}
+
 	# Inicializa cada caminho
-	def __init__(self):
+	def __init__(self, txMutacao):
 		random.seed()
-		self.tamanho = random.randint(MIN_TAM_CAMINHO, MAX_TAM_CAMINHO)
+		self.tamanho = random.randint(TamanhoCaminho.MINIMO, TamanhoCaminho.MAXIMO)
+
+		if self.tamanho % 2 == 1:
+			self.tamanho = self.tamanho + 1
+
 		self.custo = 0
-		self.caminho = self.__geraCaminho(self.tamanho)
+		self.caminho = self.__geraCaminho(self.tamanho, txMutacao)
 		self.punicao = False
 
 	# Gera um caminho aleatoriamente
-	def __geraCaminho(self, tamanho):
-		caminho = [ DIRS[random.randint(0,3)] for x in range(tamanho) ]
+	def __geraCaminho(self, tamanho, txMutacao):
+		caminho = [ random.randint(0,1) for x in range(tamanho) ]
 
-		return caminho
+		if txMutacao > 0:
+			for pos in range(tamanho):
+				chance = random.randint(1, 100)
+
+				if chance <= txMutacao:
+					item = caminho[pos]
+					caminho[pos] = self.INV_MAP[item]
+
+		newCaminho = []
+		for i in range(0, tamanho - 1, 2):
+			newCaminho.append(caminho[i:i+2])
+
+		return newCaminho
 
 	# Printa o objeto
 	def __str__(self):
@@ -79,7 +90,7 @@ def avaliaCaminho(individuo):
 	ultPos = None
 
 	# Segue as coordenadas do caminho
-	for str in individuo.caminho:
+	for direcao in individuo.caminho:
 		ultPos = posAtual
 
 		# Escapou do labirinto. +100 pra cada casa andada
@@ -87,29 +98,33 @@ def avaliaCaminho(individuo):
 			valCaminho = valCaminho + 100
 		else:
 			# Verifica cada direção se tem parede ou não e soma um valor
-			if str == DIR_LESTE_STR:
-				if labirinto[posAtual.lin][posAtual.col] & DIR_LESTE == 0:
+			if direcao == DirecoesVetor.DIR_LESTE:
+				if labirinto[posAtual.lin][posAtual.col] & \
+					DirecoesBitwise.DIR_LESTE == 0:
 					valCaminho = valCaminho + 10
 				else:
 					valCaminho = valCaminho + 30
 		
 				posAtual.col = posAtual.col + 1
-			elif str == DIR_NORTE_STR:
-				if labirinto[posAtual.lin][posAtual.col] & DIR_NORTE == 0:
+			elif direcao == DirecoesVetor.DIR_NORTE:
+				if labirinto[posAtual.lin][posAtual.col] & \
+					DirecoesBitwise.DIR_NORTE == 0:
 					valCaminho = valCaminho + 10
 				else:
 					valCaminho = valCaminho + 30
 
 				posAtual.lin = posAtual.lin - 1
-			elif str == DIR_OESTE_STR:
-				if labirinto[posAtual.lin][posAtual.col] & DIR_OESTE == 0:
+			elif direcao == DirecoesVetor.DIR_OESTE:
+				if labirinto[posAtual.lin][posAtual.col] & \
+					DirecoesBitwise.DIR_OESTE == 0:
 					valCaminho = valCaminho + 10
 				else:
 					valCaminho = valCaminho + 30
 
 				posAtual.col = posAtual.col - 1
-			elif str == DIR_SUL_STR:
-				if labirinto[posAtual.lin][posAtual.col] & DIR_SUL == 0:
+			elif direcao == DirecoesVetor.DIR_SUL:
+				if labirinto[posAtual.lin][posAtual.col] & \
+					DirecoesBitwise.DIR_SUL == 0:
 					valCaminho = valCaminho + 10
 				else:
 					valCaminho = valCaminho + 30
@@ -132,23 +147,19 @@ def avaliaCaminho(individuo):
 
 # Realiza o crossover de dois indivíduos
 def realizaCruzamento(ind1, ind2, numPontos):
-	lenInd1 = len(ind1)
-	lenInd2 = len(ind2)
-	lenMenor = None
-	posCorte = None
-
 	# Escolhe o menor comprimento
-	if lenInd1 >= lenInd2:
-		lenMenor = lenInd2
+	if len(ind1) >= len(ind2):
+		lenMenor = len(ind2)
 	else:
-		lenMenor = lenInd1
+		lenMenor = len(ind1)
 
 	numCortes = 0
+	posCorte = lenMenor / numPontos
 
 	# Percorre o caminho, cortando as partes e trocando-as
+	x = 0
 	while currPos < lenMenor:
-		x = currPos
-		y = currPos + posCorte
+		y = x + posCorte
 
 		if numCortes % 2 == 1:
 			aux = ind1.caminho[x:y]
@@ -156,13 +167,14 @@ def realizaCruzamento(ind1, ind2, numPontos):
 			ind2.caminho[x:y] = aux
 
 		numCortes = numCortes + 1
+		x = y
 
 # Gera a população, considerando a taxa de mutação
-def geraPopulacao(tamanho, txMut):
-	pop = [ Caminho() for i in range(tamanho) ]
+def geraPopulacaoInicial(tamanho, txMut):
+	return [ Caminho(txMut) for i in range(tamanho) ]
 	
-	for ind in pop:
-		print(ind.tamanho)
-
 if __name__ == "__main__":
-	print(Caminho())
+	populacao = geraPopulacaoInicial(50, 4)
+	for individuo in populacao:
+		avaliaCaminho(individuo)
+		print(individuo.custo)

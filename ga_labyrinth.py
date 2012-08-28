@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import random
+import copy
 
 # Constantes usadas
 class DirecoesBitwise:
@@ -23,6 +24,10 @@ class TiposParada:
 	FITNESS = 1
 	GERACOES = 2
 
+class TipoCrossover:
+	TORNEIO = 1
+	APTIDAO = 2
+
 # Abstração do caminho
 class Caminho:
 	INV_MAP = {0 : 1, 1 : 0}
@@ -38,6 +43,7 @@ class Caminho:
 		self.custo = 0
 		self.caminho = self.__geraCaminho(self.tamanho, txMutacao)
 		self.punicao = False
+		self.peso = 0
 
 	# Gera um caminho aleatoriamente
 	def __geraCaminho(self, tamanho, txMutacao):
@@ -158,6 +164,11 @@ class Simulacao:
 		else:
 			lenMenor = len(ind1)
 
+		# O número de cortes não pode ser maior que
+		# o comprimento do caminho
+		if numPontos > lenMenor:
+			numPontos = lenMenor
+
 		numCortes = 0
 		posCorte = lenMenor / numPontos
 
@@ -178,9 +189,50 @@ class Simulacao:
 	def __geraPopulacaoInicial(self, tamanho, txMut):
 		return [ Caminho(txMut) for i in range(tamanho) ]
 
+	# Gera a próxima geração, a partir da anterior
 	def __proximaGeracao(self, populacao, tipoCrossover, taxaCrossover,
 		taxaMutacao, tipoSelecao):
+		# Verifica as aptidões
+		if tipoSelecao == TipoSelecao.TORNEIO:
+			newPop = []
+			random.seed()
 
+			while len(newPop) < len(populacao):
+				casal = copy.deepcopy(__sorteiaCasal(populacao))
+				self.__realizaCruzamento(casal[0], casal[1])
+				newPop.extend(casal)
+		else:
+			popPonderada = copy.deepcopy(populacao)
+			roleta = []
+			tot = 0
+			valPeso = 0
+
+			for ind in popPonderada:
+				tot = tot + ind.custo
+				valPeso = valPeso + (tot - indCusto)
+
+			for ind in popPonderada:
+				ind.peso = ((tot - ind.custo) * 100 / valPeso)
+
+			popPonderada.sort(key=lambda peso: ind.peso)
+
+	
+	# Sorteia um casal para crossover
+	def __sorteiaCasal(self, populacao):
+		casal = []
+		
+		random.seed()
+		while len(casal) < 2:
+			pos1 = random.randint(0, len(populacao) - 1)
+			pos2 = random.randint(0, len(populacao) - 1)
+
+			if pos1 != pos2:
+				if populacao[pos1].custo >= populacao[pos2].custo:
+					casal.append(populacao[pos1])
+				else:
+					casal.append(populacao[pos2])
+
+		return casal
 
 	# Simulação total
 	def simulacao(popInicial, tipoParada, valorParada, tipoCrossover,
@@ -208,4 +260,4 @@ class Simulacao:
 				ctGeracao = ctGeracao + 1
 	
 if __name__ == "__main__":
-	s = Simulacao()
+	s = Simulador()

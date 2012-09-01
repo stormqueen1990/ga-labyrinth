@@ -185,6 +185,12 @@ class Simulacao:
 			numCortes = numCortes + 1
 			x = y
 
+		# Atualiza os campos dos novos indivíduos
+		ind1.custo = 0
+		ind2.custo = 0
+		ind1.tamanho = len(ind1.caminho) * 2
+		ind2.tamanho = len(ind2.caminho) * 2
+
 	# Gera a população, considerando a taxa de mutação
 	def __geraPopulacaoInicial(self, tamanho, txMut):
 		return [ Caminho(txMut) for i in range(tamanho) ]
@@ -192,15 +198,13 @@ class Simulacao:
 	# Gera a próxima geração, a partir da anterior
 	def __proximaGeracao(self, populacao, tipoCrossover, taxaCrossover,
 		taxaMutacao, tipoSelecao):
+		newPop = []
+		popAtual = None
+
 		# Verifica as aptidões
 		if tipoSelecao == TipoSelecao.TORNEIO:
-			newPop = []
 			random.seed()
-
-			while len(newPop) < len(populacao):
-				casal = copy.deepcopy(__sorteiaCasal(populacao))
-				self.__realizaCruzamento(casal[0], casal[1])
-				newPop.extend(casal)
+			popAtual = populacao
 		else:
 			popPonderada = copy.deepcopy(populacao)
 			roleta = []
@@ -214,8 +218,25 @@ class Simulacao:
 			for ind in popPonderada:
 				ind.peso = ((tot - ind.custo) * 100 / valPeso)
 
-			popPonderada.sort(key=lambda peso: ind.peso)
+			popPonderada.sort(key=lambda peso: ind.peso, reverse = True)
 
+			for ind in popPonderada:
+				if ind.peso > 0:
+					roleta.append(ind) for idx in range(ind.peso)
+
+			popAtual = roleta
+
+		# Gera nova população
+		while len(newPop) < len(populacao):
+			casal = copy.deepcopy(__sorteiaCasal(popAtual))
+			txCross = random.randint()
+
+			if txCross <= taxaCrossover:
+				self.__realizaCruzamento(casal[0], casal[1])
+
+			newPop.extend(casal)
+
+		return newPop
 	
 	# Sorteia um casal para crossover
 	def __sorteiaCasal(self, populacao):
@@ -234,10 +255,35 @@ class Simulacao:
 
 		return casal
 
+	# Aplica elitismo nas gerações existentes
+	def __elitismo(self, geracoes, tamPopulacao):
+		novaPop = []
+		todosIndividuos = []
+		# Avalia os caminhos, caso haja algum sem avaliação
+		for geracao in geracoes:
+			for ind in geracao:
+				if ind.custo == 0:
+					__avaliaCaminho(ind)
+			
+			todosIndividuos.extend(geracao)
+		
+		# Ordena do menor para o maior custo
+		todosIndividuos.sort(key=lambda custo: ind.custo)
+
+		# Seleciona os n melhores
+		for ind in todosIndividuos:
+			if len(novaPop) == tamPopulacao:
+				break
+
+			novaPop.append(ind)
+
+		return novaPop
+
 	# Simulação total
 	def simulacao(popInicial, tipoParada, valorParada, tipoCrossover,
 		taxaCrossover, taxaMutacao, tipoSelecao):
 		populacao = self.__geraPopulacaoInicial(popInicial, taxaMutacao)
+		geracoes = [populacao]
 
 		if tipoParada == TiposParada.FITNESS:
 			paradaFitness = False
@@ -250,13 +296,19 @@ class Simulacao:
 						paradaFitness = True
 						break
 
-				# criar próxima geração
+				geracoes.append(__proximaGeracao(populacao, tipoCrossover,
+					taxaCrossover, taxaMutacao, tipoSelecao)
+				geracoes = [ __elitismo(geracoes, len(populacao)) ]
 		else:
 			ctGeracao = 1
 
 			while ctGeracao < valorParada:
 				self.__avaliaCaminho(pop)
-				#criar próxima geração
+				
+				geracoes.append(__proximaGeracao(populacao, tipoCrossover,
+					taxaCrossover, taxaMutacao, tipoSelecao)
+				geracoes = [ __elitismo(geracoes, len(populacao)) ]
+
 				ctGeracao = ctGeracao + 1
 	
 if __name__ == "__main__":

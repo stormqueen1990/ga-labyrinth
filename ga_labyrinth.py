@@ -2,31 +2,7 @@
 # -*- coding: utf-8 -*-
 import random
 import copy
-
-# Constantes usadas
-class DirecoesBitwise:
-	DIR_LESTE = 8
-	DIR_NORTE = 4
-	DIR_OESTE = 2
-	DIR_SUL   = 1
-
-class DirecoesVetor:
-	DIR_LESTE = [0, 0]
-	DIR_NORTE = [0, 1]
-	DIR_OESTE = [1, 0]
-	DIR_SUL   = [1, 1]
-
-class TamanhoCaminho:
-	MINIMO = 54
-	MAXIMO = 200
-
-class TiposParada:
-	FITNESS = 1
-	GERACOES = 2
-
-class TipoCrossover:
-	TORNEIO = 1
-	APTIDAO = 2
+from constants import *
 
 # Abstração do caminho
 class Caminho:
@@ -222,7 +198,8 @@ class Simulacao:
 
 			for ind in popPonderada:
 				if ind.peso > 0:
-					roleta.append(ind) for idx in range(ind.peso)
+					rol = [ ind for idx in range(ind.peso) ]
+					roleta.extend(rol)
 
 			popAtual = roleta
 
@@ -297,7 +274,7 @@ class Simulacao:
 						break
 
 				geracoes.append(__proximaGeracao(populacao, tipoCrossover,
-					taxaCrossover, taxaMutacao, tipoSelecao)
+					taxaCrossover, taxaMutacao, tipoSelecao))
 				geracoes = [ __elitismo(geracoes, len(populacao)) ]
 		else:
 			ctGeracao = 1
@@ -306,10 +283,10 @@ class Simulacao:
 				self.__avaliaCaminho(pop)
 				
 				geracoes.append(__proximaGeracao(populacao, tipoCrossover,
-					taxaCrossover, taxaMutacao, tipoSelecao)
+					taxaCrossover, taxaMutacao, tipoSelecao))
 				geracoes = [ __elitismo(geracoes, len(populacao)) ]
 
 				ctGeracao = ctGeracao + 1
 	
 if __name__ == "__main__":
-	s = Simulador()
+	s = Simulacao()

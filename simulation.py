@@ -19,7 +19,6 @@ class Caminho:
 
 		self.custo = 0
 		self.caminho = self.__geraCaminho(self.tamanho, txMutacao)
-		self.punicao = False
 		self.peso = 0
 
 	# Gera um caminho aleatoriamente
@@ -85,15 +84,16 @@ class Simulacao:
 	# Pontua o caminho recebido de acordo com o mapa
 	def __avaliaCaminho(self, individuo):
 		valCaminho = 0
-		posAtual = Ponto(0,9)
+		posAtual = Ponto(9,0)
 		ultPos = None
 
+		punicao = False
 		# Segue as coordenadas do caminho
 		for direcao in individuo.caminho:
 			ultPos = posAtual
 
 			# Escapou do labirinto. +100 pra cada casa andada
-			if individuo.punicao:
+			if punicao:
 				valCaminho = valCaminho + 100
 			else:
 				# Verifica cada direção se tem parede ou não e soma um valor
@@ -131,15 +131,15 @@ class Simulacao:
 					posAtual.lin = posAtual.lin + 1
 
 				# Fugiu do labirinto!!
-				if posAtual.lin <= 0 or posAtual.lin >= 10 \
-					or posAtual.col <= 0 or posAtual.col >= 10:
-					individuo.punicao = True
+				if posAtual.lin < 0 or posAtual.lin >= 10 \
+					or posAtual.col < 0 or posAtual.col >= 10:
+					punicao = True
 			
 		# Não atingiu a saída do labirinto
 		if ultPos != None \
 			and ultPos.lin != 0 \
 			and ultPos.col != 9:
-			valCaminho = valCaminho + 60
+			valCaminho = valCaminho + 200
 
 		# Atribui o custo ao indivíduo
 		individuo.custo = valCaminho
@@ -207,7 +207,7 @@ class Simulacao:
 			for ind in popPonderada:
 				ind.peso = ((tot - ind.custo) * 100 / valPeso)
 
-			popPonderada.sort(key=lambda peso: ind.peso, reverse = True)
+			popPonderada.sort(key=lambda ind: ind.peso, reverse=True)
 
 			for ind in popPonderada:
 				if ind.peso > 0:

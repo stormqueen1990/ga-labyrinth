@@ -5,18 +5,6 @@ import constants
 import simulation
 from PySide import QtCore, QtGui
 
-# Desenho do labirinto
-class DesenhoLabirinto(QtGui.QWidget):
-	def __init__(self, caminho):
-		super(DesenhoLabirinto, self).__init__()
-		self.setGeometry(0, 0, 412, 359)
-		self.caminho = caminho
-
-	def paintEvent(self, event):
-		painter = QtGui.QPainter(QtGui.QPixmap("labirinto-1.png"))
-		painter.drawLine(0,0,100,100)
-		painter.end()
-
 # Interface do usuário
 class Tela(QtGui.QWidget):
 	def __init__(self):
@@ -26,6 +14,7 @@ class Tela(QtGui.QWidget):
 		# Seletor da população inicial
 		self.txtPopInicial = QtGui.QSpinBox()
 		self.txtPopInicial.setMinimum(20)
+		self.txtPopInicial.setMaximum(10000)
 
 		# Seletor do tipo de seleção
 		self.txtTipoSelecao = QtGui.QComboBox()
@@ -128,13 +117,8 @@ class Tela(QtGui.QWidget):
 		mainBox = QtGui.QWidget()
 		mainBox.setLayout(mainLayout)
 
-		lab = DesenhoLabirinto(None)
-
 		hlayout = QtGui.QHBoxLayout()
 		hlayout.addWidget(mainBox)
-		hlayout.addWidget(lab)
-
-		lab.show()
 
 		self.setLayout(hlayout)
 	
@@ -182,8 +166,5 @@ if __name__ == "__main__":
 	tela = Tela()
 	tela.show()
 
-	#lab = DesenhoLabirinto(None)
-	#lab.show()
-	
 	app.exec_()
 	sys.exit()

@@ -83,6 +83,8 @@ class Simulacao:
 
 	# Pontua o caminho recebido de acordo com o mapa
 	def __avaliaCaminho(self, individuo):
+		labControle = [ [ 0 for i in range(0,10) ] for i in range(0,10) ]
+
 		valCaminho = 0
 		posAtual = Ponto(9,0)
 		ultPos = None
@@ -100,7 +102,12 @@ class Simulacao:
 				if direcao == constants.DirecoesVetor.DIR_LESTE:
 					if self.labirinto[posAtual.lin][posAtual.col] & \
 						constants.DirecoesBitwise.DIR_LESTE == 0:
-						valCaminho = valCaminho + 10
+						valCaminho = valCaminho + 1
+					else:
+						valCaminho = valCaminho + 30
+
+					if labControle[posAtual.lin][posAtual.col] == 0:
+						labControle[posAtual.lin][posAtual.col] = 1
 					else:
 						valCaminho = valCaminho + 30
 			
@@ -108,7 +115,12 @@ class Simulacao:
 				elif direcao == constants.DirecoesVetor.DIR_NORTE:
 					if self.labirinto[posAtual.lin][posAtual.col] & \
 						constants.DirecoesBitwise.DIR_NORTE == 0:
-						valCaminho = valCaminho + 10
+						valCaminho = valCaminho + 1
+					else:
+						valCaminho = valCaminho + 30
+
+					if labControle[posAtual.lin][posAtual.col] == 0:
+						labControle[posAtual.lin][posAtual.col] = 1
 					else:
 						valCaminho = valCaminho + 30
 
@@ -116,7 +128,12 @@ class Simulacao:
 				elif direcao == constants.DirecoesVetor.DIR_OESTE:
 					if self.labirinto[posAtual.lin][posAtual.col] & \
 						constants.DirecoesBitwise.DIR_OESTE == 0:
-						valCaminho = valCaminho + 10
+						valCaminho = valCaminho + 1
+					else:
+						valCaminho = valCaminho + 30
+
+					if labControle[posAtual.lin][posAtual.col] == 0:
+						labControle[posAtual.lin][posAtual.col] = 1
 					else:
 						valCaminho = valCaminho + 30
 
@@ -124,7 +141,12 @@ class Simulacao:
 				elif direcao == constants.DirecoesVetor.DIR_SUL:
 					if self.labirinto[posAtual.lin][posAtual.col] & \
 						constants.DirecoesBitwise.DIR_SUL == 0:
-						valCaminho = valCaminho + 10
+						valCaminho = valCaminho + 1
+					else:
+						valCaminho = valCaminho + 30
+
+					if labControle[posAtual.lin][posAtual.col] == 0:
+						labControle[posAtual.lin][posAtual.col] = 1
 					else:
 						valCaminho = valCaminho + 30
 
@@ -272,9 +294,6 @@ class Simulacao:
 		# Ordena do menor para o maior custo
 		todosIndividuos.sort(key=lambda ind: ind.custo)
 
-		for ind in todosIndividuos:
-			print(ind)
-
 		# Seleciona os n melhores
 		for ind in todosIndividuos:
 			if len(novaPop) == tamPopulacao:
@@ -304,7 +323,8 @@ class Simulacao:
 
 				geracoes.append(self.__proximaGeracao(populacao, tipoCrossover,
 					taxaCrossover, taxaMutacao, tipoSelecao))
-				geracoes = [ self.__elitismo(geracoes, len(populacao)) ]
+				populacao = self.__elitismo(geracoes, len(populacao))
+				geracoes = [ populacao ]
 		else:
 			ctGeracao = 1
 
@@ -314,7 +334,8 @@ class Simulacao:
 				
 				geracoes.append(self.__proximaGeracao(populacao, tipoCrossover,
 					taxaCrossover, taxaMutacao, tipoSelecao))
-				geracoes = [ self.__elitismo(geracoes, len(populacao)) ]
+				populacao = self.__elitismo(geracoes, len(populacao))
+				geracoes = [ populacao ]
 
 				ctGeracao = ctGeracao + 1
 
@@ -322,4 +343,6 @@ class Simulacao:
 		for geracao in geracoes:
 			listaResultado.extend(geracao)
 
+		listaResultado.sort(key=lambda ind: ind.custo, reverse=True)
+	
 		return listaResultado

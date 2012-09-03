@@ -2,16 +2,17 @@
 # -*- coding: utf-8 -*-
 import random
 import copy
-from constants import *
+import constants
+from array import array
 
 # Abstração do caminho
 class Caminho:
 	INV_MAP = {0 : 1, 1 : 0}
 
 	# Inicializa cada caminho
-	def __init__(self, txMutacao):
+	def __init__(self, txMutacao, minTamanho, maxTamanho):
 		random.seed()
-		self.tamanho = random.randint(TamanhoCaminho.MINIMO, TamanhoCaminho.MAXIMO)
+		self.tamanho = random.randint(minTamanho, maxTamanho)
 
 		if self.tamanho % 2 == 1:
 			self.tamanho = self.tamanho + 1
@@ -38,6 +39,20 @@ class Caminho:
 			newCaminho.append(caminho[i:i+2])
 
 		return newCaminho
+	
+	# Retorna uma string representando o caminho
+	def caminhoStr(self):
+		caminhoStr = array('c')
+		caminhoStr.append('|')
+
+		for parte in self.caminho:
+			caminhoStr.fromstring('\"')
+			caminhoStr.fromstring(`parte[0]`)
+			caminhoStr.fromstring(`parte[1]`)
+			caminhoStr.fromstring('\"')
+			caminhoStr.fromstring('|')
+
+		return caminhoStr.tostring()
 
 	# Printa o objeto
 	def __str__(self):
@@ -85,33 +100,33 @@ class Simulacao:
 				valCaminho = valCaminho + 100
 			else:
 				# Verifica cada direção se tem parede ou não e soma um valor
-				if direcao == DirecoesVetor.DIR_LESTE:
+				if direcao == constants.DirecoesVetor.DIR_LESTE:
 					if self.labirinto[posAtual.lin][posAtual.col] & \
-						DirecoesBitwise.DIR_LESTE == 0:
+						constants.DirecoesBitwise.DIR_LESTE == 0:
 						valCaminho = valCaminho + 10
 					else:
 						valCaminho = valCaminho + 30
 			
 					posAtual.col = posAtual.col + 1
-				elif direcao == DirecoesVetor.DIR_NORTE:
+				elif direcao == constants.DirecoesVetor.DIR_NORTE:
 					if self.labirinto[posAtual.lin][posAtual.col] & \
-						DirecoesBitwise.DIR_NORTE == 0:
+						constants.DirecoesBitwise.DIR_NORTE == 0:
 						valCaminho = valCaminho + 10
 					else:
 						valCaminho = valCaminho + 30
 
 					posAtual.lin = posAtual.lin - 1
-				elif direcao == DirecoesVetor.DIR_OESTE:
+				elif direcao == constants.DirecoesVetor.DIR_OESTE:
 					if self.labirinto[posAtual.lin][posAtual.col] & \
-						DirecoesBitwise.DIR_OESTE == 0:
+						constants.DirecoesBitwise.DIR_OESTE == 0:
 						valCaminho = valCaminho + 10
 					else:
 						valCaminho = valCaminho + 30
 
 					posAtual.col = posAtual.col - 1
-				elif direcao == DirecoesVetor.DIR_SUL:
+				elif direcao == constants.DirecoesVetor.DIR_SUL:
 					if self.labirinto[posAtual.lin][posAtual.col] & \
-						DirecoesBitwise.DIR_SUL == 0:
+						constants.DirecoesBitwise.DIR_SUL == 0:
 						valCaminho = valCaminho + 10
 					else:
 						valCaminho = valCaminho + 30
@@ -135,10 +150,10 @@ class Simulacao:
 	# Realiza o crossover de dois indivíduos
 	def __realizaCruzamento(self, ind1, ind2, numPontos):
 		# Escolhe o menor comprimento
-		if len(ind1) >= len(ind2):
-			lenMenor = len(ind2)
+		if len(ind1.caminho) >= len(ind2.caminho):
+			lenMenor = len(ind2.caminho)
 		else:
-			lenMenor = len(ind1)
+			lenMenor = len(ind1.caminho)
 
 		# O número de cortes não pode ser maior que
 		# o comprimento do caminho
@@ -149,8 +164,9 @@ class Simulacao:
 		posCorte = lenMenor / numPontos
 
 		# Percorre o caminho, cortando as partes e trocando-as
+		y = 0
 		x = 0
-		while currPos < lenMenor:
+		while y < lenMenor:
 			y = x + posCorte
 
 			if numCortes % 2 == 1:
@@ -168,8 +184,8 @@ class Simulacao:
 		ind2.tamanho = len(ind2.caminho) * 2
 
 	# Gera a população, considerando a taxa de mutação
-	def __geraPopulacaoInicial(self, tamanho, txMut):
-		return [ Caminho(txMut) for i in range(tamanho) ]
+	def __geraPopulacaoInicial(self, tamanho, txMut, minTamanho, maxTamanho):
+		return [ Caminho(txMut, minTamanho, maxTamanho) for i in range(tamanho) ]
 
 	# Gera a próxima geração, a partir da anterior
 	def __proximaGeracao(self, populacao, tipoCrossover, taxaCrossover,
@@ -178,7 +194,7 @@ class Simulacao:
 		popAtual = None
 
 		# Verifica as aptidões
-		if tipoSelecao == TipoSelecao.TORNEIO:
+		if tipoSelecao == constants.TipoSelecao.TORNEIO:
 			random.seed()
 			popAtual = populacao
 		else:
@@ -189,7 +205,7 @@ class Simulacao:
 
 			for ind in popPonderada:
 				tot = tot + ind.custo
-				valPeso = valPeso + (tot - indCusto)
+				valPeso = valPeso + (tot - ind.custo)
 
 			for ind in popPonderada:
 				ind.peso = ((tot - ind.custo) * 100 / valPeso)
@@ -205,11 +221,13 @@ class Simulacao:
 
 		# Gera nova população
 		while len(newPop) < len(populacao):
-			casal = copy.deepcopy(__sorteiaCasal(popAtual))
-			txCross = random.randint()
+			casal = copy.deepcopy(self.__sorteiaCasal(popAtual))
 
-			if txCross <= taxaCrossover:
-				self.__realizaCruzamento(casal[0], casal[1])
+			if taxaCrossover > 0:
+				txCross = random.randint(1, 100)
+
+				if txCross <= taxaCrossover:
+					self.__realizaCruzamento(casal[0], casal[1], tipoCrossover)
 
 			newPop.extend(casal)
 
@@ -240,7 +258,7 @@ class Simulacao:
 		for geracao in geracoes:
 			for ind in geracao:
 				if ind.custo == 0:
-					__avaliaCaminho(ind)
+					self.__avaliaCaminho(ind)
 			
 			todosIndividuos.extend(geracao)
 		
@@ -257,36 +275,41 @@ class Simulacao:
 		return novaPop
 
 	# Simulação total
-	def simulacao(popInicial, tipoParada, valorParada, tipoCrossover,
-		taxaCrossover, taxaMutacao, tipoSelecao):
-		populacao = self.__geraPopulacaoInicial(popInicial, taxaMutacao)
+	def simulacao(self, popInicial, tipoParada, valorParada, tipoCrossover,
+		taxaCrossover, taxaMutacao, tipoSelecao, minTamanho, maxTamanho):
+		populacao = self.__geraPopulacaoInicial(popInicial, taxaMutacao,
+			minTamanho, maxTamanho)
 		geracoes = [populacao]
 
-		if tipoParada == TiposParada.FITNESS:
+		if tipoParada == constants.TiposParada.FITNESS:
 			paradaFitness = False
 			
 			while not paradaFitness:
 				for ind in populacao:
-					self.__avaliaCaminho(pop)
+					self.__avaliaCaminho(ind)
 
-					if pop.custo <= valorParada:
+					if ind.custo <= valorParada:
 						paradaFitness = True
 						break
 
-				geracoes.append(__proximaGeracao(populacao, tipoCrossover,
+				geracoes.append(self.__proximaGeracao(populacao, tipoCrossover,
 					taxaCrossover, taxaMutacao, tipoSelecao))
-				geracoes = [ __elitismo(geracoes, len(populacao)) ]
+				geracoes = [ self.__elitismo(geracoes, len(populacao)) ]
 		else:
 			ctGeracao = 1
 
 			while ctGeracao < valorParada:
-				self.__avaliaCaminho(pop)
+				for ind in populacao:
+					self.__avaliaCaminho(ind)
 				
-				geracoes.append(__proximaGeracao(populacao, tipoCrossover,
+				geracoes.append(self.__proximaGeracao(populacao, tipoCrossover,
 					taxaCrossover, taxaMutacao, tipoSelecao))
-				geracoes = [ __elitismo(geracoes, len(populacao)) ]
+				geracoes = [ self.__elitismo(geracoes, len(populacao)) ]
 
 				ctGeracao = ctGeracao + 1
-	
-if __name__ == "__main__":
-	s = Simulacao()
+
+		listaResultado = []
+		for geracao in geracoes:
+			listaResultado.extend(geracao)
+
+		return listaResultado

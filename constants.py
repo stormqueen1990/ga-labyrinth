@@ -22,9 +22,11 @@ class TamanhoCaminho:
 class TiposParada:
 	FITNESS = 1
 	GERACOES = 2
+	MAPA_ROTULO = { FITNESS : "Aptidão"
+			      , GERACOES : "Número de gerações" }
 
-class TipoCrossover:
+class TipoSelecao:
 	TORNEIO = 1
 	APTIDAO = 2
 	MAPA_ROTULO = { TORNEIO : "Torneio"
-				  , APTIDAO : "Aptid\343o" }
+				  , APTIDAO : "Aptidão" }

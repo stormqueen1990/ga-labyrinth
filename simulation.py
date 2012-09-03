@@ -46,10 +46,7 @@ class Caminho:
 		caminhoStr.append('|')
 
 		for parte in self.caminho:
-			caminhoStr.fromstring('\"')
-			caminhoStr.fromstring(`parte[0]`)
-			caminhoStr.fromstring(`parte[1]`)
-			caminhoStr.fromstring('\"')
+			caminhoStr.fromstring(constants.DirecoesVetor.converteTexto(parte))
 			caminhoStr.fromstring('|')
 
 		return caminhoStr.tostring()
@@ -134,8 +131,8 @@ class Simulacao:
 					posAtual.lin = posAtual.lin + 1
 
 				# Fugiu do labirinto!!
-				if posAtual.lin in [-1, 10] \
-					or posAtual.col in [-1, 10]:
+				if posAtual.lin <= 0 or posAtual.lin >= 10 \
+					or posAtual.col <= 0 or posAtual.col >= 10:
 					individuo.punicao = True
 			
 		# Não atingiu a saída do labirinto
@@ -230,6 +227,16 @@ class Simulacao:
 					self.__realizaCruzamento(casal[0], casal[1], tipoCrossover)
 
 			newPop.extend(casal)
+		
+		# Faz a mutação para cada posição da nova população
+		for ind in newPop:
+			for direcao in ind.caminho:
+				for pos in range(len(direcao)):
+					if taxaMutacao > 0:
+						chance = random.randint(1,100)
+
+						if chance <= taxaMutacao:
+							direcao[pos] = Caminho.INV_MAP[direcao[pos]]
 
 		return newPop
 	
@@ -263,7 +270,10 @@ class Simulacao:
 			todosIndividuos.extend(geracao)
 		
 		# Ordena do menor para o maior custo
-		todosIndividuos.sort(key=lambda custo: ind.custo)
+		todosIndividuos.sort(key=lambda ind: ind.custo)
+
+		for ind in todosIndividuos:
+			print(ind)
 
 		# Seleciona os n melhores
 		for ind in todosIndividuos:

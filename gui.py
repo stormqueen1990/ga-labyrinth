@@ -5,7 +5,19 @@ import constants
 import simulation
 from PySide import QtCore, QtGui
 
-# Monta a tela
+# Desenho do labirinto
+class DesenhoLabirinto(QtGui.QWidget):
+	def __init__(self, caminho):
+		super(DesenhoLabirinto, self).__init__()
+		self.setGeometry(0, 0, 412, 359)
+		self.caminho = caminho
+
+	def paintEvent(self, event):
+		painter = QtGui.QPainter(QtGui.QPixmap("labirinto-1.png"))
+		painter.drawLine(0,0,100,100)
+		painter.end()
+
+# Interface do usuário
 class Tela(QtGui.QWidget):
 	def __init__(self):
 		super(Tela, self).__init__()
@@ -32,6 +44,7 @@ class Tela(QtGui.QWidget):
 		# Número de gerações para parada
 		self.txtValorParada = QtGui.QSpinBox()
 		self.txtValorParada.setMinimum(1)
+		self.txtValorParada.setMaximum(10000)
 
 		# Seletor de taxa de mutação
 		self.txtTaxaMutacao = QtGui.QSpinBox()
@@ -77,6 +90,7 @@ class Tela(QtGui.QWidget):
 
 		self.listagemResultados.setModel(self.modeloListagem)
 	
+		# Formulário de seleção dos parâmetros
 		paramFormLayout = QtGui.QFormLayout()
 		paramFormLayout.addRow(self.trUtf8("População inicial:"), self.txtPopInicial)
 		paramFormLayout.addRow(self.trUtf8("Tipo de parada:"), self.txtTipoParada)
@@ -90,6 +104,7 @@ class Tela(QtGui.QWidget):
 		paramForm = QtGui.QWidget()
 		paramForm.setLayout(paramFormLayout)
 
+		# Botões de ação
 		barraBotoesLayout = QtGui.QHBoxLayout()
 		barraBotoesLayout.setAlignment(QtCore.Qt.AlignCenter)
 		barraBotoesLayout.addWidget(self.btnIniciarSimulacao)
@@ -98,16 +113,30 @@ class Tela(QtGui.QWidget):
 		barraBotoes = QtGui.QWidget()
 		barraBotoes.setLayout(barraBotoesLayout)
 
+		# Tabela dos resultados
 		containerTabela = QtGui.QGroupBox(self.trUtf8("Resultados"))
 		layoutContTabela = QtGui.QHBoxLayout()
 		layoutContTabela.addWidget(self.listagemResultados)
 		containerTabela.setLayout(layoutContTabela)
 
+		# Montagem do layout
 		mainLayout = QtGui.QVBoxLayout()
 		mainLayout.addWidget(paramForm)
 		mainLayout.addWidget(barraBotoes)
 		mainLayout.addWidget(containerTabela)
-		self.setLayout(mainLayout)
+		
+		mainBox = QtGui.QWidget()
+		mainBox.setLayout(mainLayout)
+
+		lab = DesenhoLabirinto(None)
+
+		hlayout = QtGui.QHBoxLayout()
+		hlayout.addWidget(mainBox)
+		hlayout.addWidget(lab)
+
+		lab.show()
+
+		self.setLayout(hlayout)
 	
 	# Adiciona um resultado à listagem
 	def __novoResultado(self, caminho):
@@ -136,6 +165,9 @@ class Tela(QtGui.QWidget):
 		resultados = simulacao.simulacao(popInicial, tipoParada, valorParada,
 			tipoCrossover, taxaCrossover, taxaMutacao, tipoSelecao, minTamanho,
 			maxTamanho)
+		
+		if self.modeloListagem.rowCount() > 0:
+			self.modeloListagem.removeRows(0, self.modeloListagem.rowCount())
 
 		for ind in resultados:
 			self.__novoResultado(ind)
@@ -149,6 +181,9 @@ if __name__ == "__main__":
 
 	tela = Tela()
 	tela.show()
+
+	#lab = DesenhoLabirinto(None)
+	#lab.show()
 	
 	app.exec_()
 	sys.exit()

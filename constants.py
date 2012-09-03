@@ -14,6 +14,17 @@ class DirecoesVetor:
 	DIR_NORTE = [0, 1]
 	DIR_OESTE = [1, 0]
 	DIR_SUL   = [1, 1]
+	
+	@staticmethod
+	def converteTexto(parte):
+		if parte == DirecoesVetor.DIR_LESTE:
+			return "L"
+		elif parte == DirecoesVetor.DIR_NORTE:
+			return "N"
+		elif parte == DirecoesVetor.DIR_OESTE:
+			return "O"
+		elif parte == DirecoesVetor.DIR_SUL:
+			return "S"
 
 class TamanhoCaminho:
 	MINIMO = 54
